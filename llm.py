@@ -7,8 +7,18 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 load_dotenv()
+
+SYSTEM_PROMPT_DEFAULT = "根据下面提供的上下文用中文回答问题: \n{}"
+SYSTEM_PROMPT_REPO = "下面是一个代码仓库中的代码，根据代码回答我的问题: \n{}"
+
+SYSTEM_PROMPT = {
+    "repo": SYSTEM_PROMPT_REPO,
+    "default": SYSTEM_PROMPT_DEFAULT,
+}
+
 parser = argparse.ArgumentParser(description="llm")
 parser.add_argument("--prompt", default="")
+parser.add_argument("--sys_prompt", default="default", choices=["repo", "default"])
 parser.add_argument("--context", required=False)
 parser.add_argument("--pipe", action="store_true")
 parser.add_argument("--chat", action="store_true")
@@ -17,7 +27,9 @@ args = parser.parse_args()
 prompt = args.prompt
 
 
-def gemini(q, context, use_chat=False, markdown=False):
+def gemini(
+    q, context, use_chat=False, markdown=False, sys_prompt=SYSTEM_PROMPT_DEFAULT
+):
     safety_settings = {
         HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
         HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
@@ -29,7 +41,7 @@ def gemini(q, context, use_chat=False, markdown=False):
     os.environ["https_proxy"] = os.getenv("PROXY", "")
     model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
     if context:
-        prompt = f"根据下面的参考文章用中文回答问题: {q}\n{context}"
+        prompt = sys_prompt.format(context)
     else:
         prompt = f"{q}"
     if markdown:
@@ -75,11 +87,28 @@ def gemini(q, context, use_chat=False, markdown=False):
 def process_input():
     context = None
     if args.context:
-        with open(args.context, encoding="utf8") as f:
-            context = f.read()
+        if os.path.isdir(args.context):
+            context = ""
+            for root, dirs, files in os.walk(args.context):
+                for file in files:
+                    fullpath = os.path.join(root, file)
+                    if fullpath.endswith(".py") and "venv" not in fullpath:
+                        print("add to context: ", fullpath)
+                        with open(fullpath, encoding="utf8") as f:
+                            content = f.read()
+                            context += f"=== {fullpath} === \n\n{content}\n\n"
+        else:
+            with open(args.context, encoding="utf8") as f:
+                context = f.read()
     elif args.pipe:
         context = sys.stdin.read()
-    gemini(prompt, context, use_chat=args.chat, markdown=args.markdown)
+    gemini(
+        prompt,
+        context,
+        use_chat=args.chat,
+        markdown=args.markdown,
+        sys_prompt=SYSTEM_PROMPT.get(args.sys_prompt, SYSTEM_PROMPT_DEFAULT),
+    )
 
 
 if __name__ == "__main__":
