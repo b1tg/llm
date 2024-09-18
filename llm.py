@@ -10,15 +10,17 @@ load_dotenv()
 
 SYSTEM_PROMPT_DEFAULT = "根据下面提供的上下文用中文回答问题: \n{}"
 SYSTEM_PROMPT_REPO = "下面是一个代码仓库中的代码，根据代码回答我的问题: \n{}"
+SYSTEM_PROMPT_TRANSCRIPT = "下面是一段转录文字，根据上下文用中文回答我的问题: \n{}"
 
 SYSTEM_PROMPT = {
     "repo": SYSTEM_PROMPT_REPO,
     "default": SYSTEM_PROMPT_DEFAULT,
+    "trans": SYSTEM_PROMPT_TRANSCRIPT,
 }
 
 parser = argparse.ArgumentParser(description="llm")
 parser.add_argument("--prompt", default="")
-parser.add_argument("--sys_prompt", default="default", choices=["repo", "default"])
+parser.add_argument("--sys_prompt", default="default", choices=["repo", "default", "trans"])
 parser.add_argument("--context", required=False)
 parser.add_argument("--pipe", action="store_true")
 parser.add_argument("--chat", action="store_true")
@@ -59,8 +61,19 @@ def gemini(
         chat = model.start_chat(history=history)
         while True:
             i = input(" > ")
+            if i.strip() == "":
+                continue
             if i in (".exit", ".q", "q", "exit"):
+                print("Exiting chat")
                 break
+            if i == ".md":
+                print("Switching to markdown mode")
+                use_stream = False
+                continue
+            if i == ".stream":
+                print("Switching to stream mode")
+                use_stream = True
+                continue
             response = chat.send_message(
                 i, stream=use_stream, safety_settings=safety_settings
             )
