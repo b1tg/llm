@@ -11,6 +11,9 @@ load_dotenv()
 SYSTEM_PROMPT_DEFAULT = "根据下面提供的上下文用中文回答问题: \n{}"
 SYSTEM_PROMPT_REPO = "下面是一个代码仓库中的代码，根据代码回答我的问题: \n{}"
 SYSTEM_PROMPT_TRANSCRIPT = "下面是一段转录文字，根据上下文用中文回答我的问题: \n{}"
+SYSTEM_PROMPT_CUSTOM1 = (
+    "根据下面提供的系列文章用中文回答问题，每篇文章的标题用=== 包围 \n{}"
+)
 
 SYSTEM_PROMPT = {
     "repo": SYSTEM_PROMPT_REPO,
@@ -20,7 +23,10 @@ SYSTEM_PROMPT = {
 
 parser = argparse.ArgumentParser(description="llm")
 parser.add_argument("--prompt", default="")
-parser.add_argument("--sys_prompt", default="default", choices=["repo", "default", "trans"])
+parser.add_argument("--url", default="")
+parser.add_argument(
+    "--sys_prompt", default="default", choices=["repo", "default", "trans"]
+)
 parser.add_argument("--context", required=False)
 parser.add_argument("--pipe", action="store_true")
 parser.add_argument("--chat", action="store_true")
@@ -99,7 +105,13 @@ def gemini(
 
 def process_input():
     context = None
-    if args.context:
+    if args.url:
+        import requests
+
+        os.environ["https_proxy"] = os.getenv("PROXY", "")
+        response = requests.get("https://r.jina.ai/{}".format(args.url))
+        context = response.text
+    elif args.context:
         if os.path.isdir(args.context):
             context = ""
             for root, dirs, files in os.walk(args.context):
