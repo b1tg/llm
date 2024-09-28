@@ -6,6 +6,13 @@ Ask for code repo
 python llm.py --context /tmp/repo.git --chat --sys_prompt repo
 ```
 
+在代码库中根据关键词出现的上下文询问问题 (省 token)
+
+```
+rg -N  onnx magika-main --type py --type rust  -B 5 | python llm.py --pipe --prompt "oonx 是如何被加载的"
+```
+
+
 
 Ask for url
 
