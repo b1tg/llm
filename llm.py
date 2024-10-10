@@ -135,9 +135,23 @@ def gemini(
                 print("Switching to stream mode")
                 use_stream = True
                 continue
+            print(
+                "total_tokens(chat): history=%d i=%d "
+                % (
+                    model.count_tokens(chat.history).total_tokens,
+                    model.count_tokens(i).total_tokens,
+                )
+            )
+            from google.generativeai.types.content_types import to_contents
+
+            print(
+                "total_tokens(chat): total=%d"
+                % (model.count_tokens(chat.history + to_contents(i)).total_tokens)
+            )
             response = chat.send_message(
                 i, stream=use_stream, safety_settings=safety_settings
             )
+            print(response.usage_metadata)
             if use_stream:
                 for chunk in response:
                     print(chunk.text)
@@ -146,9 +160,19 @@ def gemini(
                 markdown = Markdown(response.text)
                 console.print(markdown)
     else:
+        tokens = model.count_tokens(prompt).total_tokens
+        if tokens > 128 * 1000:
+            print("# > 128k tokens:  $0.15  | $0.30  / 1 million tokens")
+            dolor_per_token = 0.15 / 1000000
+        else:
+            print("# < 128k tokens:  $0.075 | $0.60  / 1 million tokens")
+            dolor_per_token = 0.075 / 1000000
+
+        print("total_tokens(prompt): ", tokens, tokens * dolor_per_token)
         response = model.generate_content(
             prompt, stream=use_stream, safety_settings=safety_settings
         )
+        print(response.usage_metadata)
         if use_stream:
             for chunk in response:
                 print(chunk.text)
@@ -180,7 +204,7 @@ def process_input():
             for root, dirs, files in os.walk(args.context):
                 for file in files:
                     fullpath = os.path.join(root, file)
-                    if fullpath.endswith(".py") and "venv" not in fullpath:
+                    if fullpath.endswith(".md") and "venv" not in fullpath:
                         print("add to context: ", fullpath)
                         with open(fullpath, encoding="utf8") as f:
                             content = f.read()
