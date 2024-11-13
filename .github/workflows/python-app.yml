@@ -11,13 +11,14 @@ on:
 
 permissions:
   contents: read
-
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+  GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
-    steps:
+    environment: dev
+    steps: 
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -32,16 +33,6 @@ jobs:
     - name: Syntax check
       run: |
         ruff check
-    # - name: Lint with flake8
-    #   run: |
-    #     # stop the build if there are Python syntax errors or undefined names
-    #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-    #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    # - name: Test with pytest
-    #   run: |
-    #     pytest
-
     - name: Test command
       run: |
         python llm.py --url https://blog.torproject.org/tor-is-still-safe --prompt "summary" |grep Tor
