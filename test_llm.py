@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-
+import pytest
 
 
 def test_url():
@@ -21,7 +21,7 @@ def test_url():
     assert res.returncode == 0
     assert b"Tor" in res.stdout
 
-
+@pytest.mark.skip(reason="need cookie")
 def test_youtube():
     res = subprocess.run(
         [
