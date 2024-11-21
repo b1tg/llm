@@ -28,7 +28,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest ruff
-        pip install python-dotenv rich google-generativeai
+        pip install python-dotenv rich google-generativeai yt-dlp
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Syntax check
       run: |
@@ -36,3 +36,6 @@ jobs:
     - name: Test command
       run: |
         python llm.py --url https://blog.torproject.org/tor-is-still-safe --prompt "summary" |grep Tor
+    - name: Test pytest
+      run: |
+        pytest .\test_llm.py -s
