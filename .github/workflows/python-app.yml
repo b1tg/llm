@@ -38,4 +38,4 @@ jobs:
         python llm.py --url https://blog.torproject.org/tor-is-still-safe --prompt "summary" |grep Tor
     - name: Test pytest
       run: |
-        pytest .\test_llm.py -s
+        pytest test_llm.py -s
